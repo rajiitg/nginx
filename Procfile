@@ -1,0 +1,1 @@
+web: bin/start-nginx java -jar target/nginx-1.0-SNAPSHOT.jar
