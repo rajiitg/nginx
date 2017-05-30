@@ -1,0 +1,6 @@
+steps:
+
+heroku create --buildpack https://github.com/ddollar/heroku-buildpack-multi.git
+herokbuildpacks:set --index 1 https://github.com/ryandotsmith/nginx-buildpack.git --app nginxproxys
+heroku buildpacks:set --index 2 https://github.com/heroku/heroku-buildpack-java.git --app nginxproxys
+heroku stack:set cedar-14 -a nginxproxys
