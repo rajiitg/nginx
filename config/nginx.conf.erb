@@ -9,38 +9,74 @@ events {
 }
 
 http {
-  gzip on;
-  gzip_comp_level 2;
-  gzip_min_length 512;
+    # Basic settings
+    absolute_redirect off;
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    if_modified_since off;
+    etag on;
 
-  server_tokens off;
+      log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id';
+      access_log logs/nginx/access.log l2met;
+      error_log logs/nginx/error.log;
 
-  log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id';
-  access_log logs/nginx/access.log l2met;
-  error_log logs/nginx/error.log;
+    #proxy_cache_path /media/olive/sw/nginx/olive/cache levels=1:2 keys_zone=my_cache:10m max_size=10g inactive=60m use_temp_path=off;
 
-  include mime.types;
-  default_type application/octet-stream;
-  sendfile on;
+    gzip on;
+    gzip_comp_level 6;
+    gzip_vary on;
+    gzip_types text/plain text/css apllication/json application/x-javascript application/javascript text/xml application/xml text/javascript;
 
-  #Must read the body in 5 seconds.
-  client_body_timeout 5;
-
-  upstream app_server {
-    server evdusk-oligui.herokuapp.com fail_timeout=0;
-    #server localhost:<%= ENV["APP_PORT"] %> fail_timeout=0;
-  }
-
-  server {
-    listen <%= ENV["PORT"] %>;
-    server_name _;
-    keepalive_timeout 5;
-
-    location / {
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header Host $http_host;
-      proxy_redirect off;
-      proxy_pass http://app_server;
+    upstream oliveserver_backend {
+    # default is round robin
+        server evdusk-oligui.herokuapp.com;
     }
-  }
+
+
+    # Expires map
+    map $sent_http_content_type $expires {
+    	default                    off;
+	text/html                  epoch;
+    	text/css                   max;
+    	application/javascript     max;
+    	~image/                    max;
+    }
+
+    server {
+        listen <%= ENV["PORT"] %>;
+	expires $expires;
+
+        location / {
+		#proxy_cache my_cache;
+	        #proxy_cache_revalidate on;
+        	#proxy_cache_min_uses 3;
+	        #proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+        	#proxy_cache_lock on;
+            	proxy_pass http://oliveserver_backend;
+		proxy_set_header        X-Real-IP       $remote_addr;
+        	proxy_set_header        Host            $host;
+        	proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        	proxy_pass_request_headers              on;
+        }
+
+	location ~*  \.(css|js)$ {
+		#proxy_cache my_cache;
+                #proxy_cache_revalidate on;
+                #proxy_cache_min_uses 3;
+                #proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+                #proxy_cache_lock on;
+		proxy_pass http://oliveserver_backend;
+		access_log off;
+        	expires 1y;
+		add_header Cache-Control "public";
+    	}
+
+	#location ~*  \.(pdf)$ {
+        #	expires -1;
+    	#}
+
+    }
 }
