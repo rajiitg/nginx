@@ -1,1 +1,1 @@
-web: target/classes/scripts/build_nginx.sh;target/bin/start-nginx java -jar target/nginx-1.0-SNAPSHOT.jar
+web: bin/start-nginx java -Dserver.port=$APP_PORT -jar target/nginx-1.0-SNAPSHOT.jar
