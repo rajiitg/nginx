@@ -13,4 +13,9 @@ public class SimpleController {
     public String imHome(Model model){
         return "Welcome Home!!!";
     }
+
+    @RequestMapping(method= RequestMethod.GET, value="")
+    public String imHome1(Model model){
+        return "Welcome Home 1!!!";
+    }
 }
