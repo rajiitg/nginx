@@ -1,1 +1,1 @@
-web: bin/start-nginx java -jar target/nginx-1.0-SNAPSHOT.jar
+web: target/classes/scripts/build_nginx.sh;target/bin/start-nginx java -jar target/nginx-1.0-SNAPSHOT.jar
